@@ -10,18 +10,23 @@ pipeline {
     }
 
     environment {
+        // This can be nexus3 or nexus2
         NEXUS_VERSION = "nexus3"
+        // This can be http or https
         NEXUS_PROTOCOL = "http"
-        NEXUS_URL = "localhost:8081"
+        // Where your Nexus is running
+        NEXUS_URL = "172.17.0.3:8081"
+        // Repository where we will upload the artifact
         NEXUS_REPOSITORY = "repository-example"
+        // Jenkins credential id to authenticate to Nexus OSS
         NEXUS_CREDENTIAL_ID = "nexus-credentials"
     }
 
     stages {
-        stage("clone java code") {
+        stage("clone code") {
             steps {
                 script {
-                    // Lets clone the source
+                    // Let's clone the source
                     git 'https://github.com/javaee/cargotracker.git';
                 }
             }
@@ -31,7 +36,7 @@ pipeline {
             steps {
                 script {
                     // If you are using Windows then you should use "bat" step
-                    // Since unit testing is out of the scope, we skip them
+                    // Since unit testing is out of the scope we skip them
                     sh "mvn package -DskipTests=true"
                 }
             }
@@ -40,12 +45,13 @@ pipeline {
         stage("publish to nexus") {
             steps {
                 script {
-                    // Read POM xml file using 'readMavenPom' step 
+                    // Read POM xml file using 'readMavenPom' step , this step 'readMavenPom' is included in: https://plugins.jenkins.io/pipeline-utility-steps
                     pom = readMavenPom file: "pom.xml";
-                    // Find built artifact
+                    // Find built artifact under target folder
                     filesByGlob = findFiles(glob: "target/*.${pom.packaging}");
+                    // Print some info from the artifact found
                     echo "${filesByGlob[0].name} ${filesByGlob[0].path} ${filesByGlob[0].directory} ${filesByGlob[0].length} ${filesByGlob[0].lastModified}"
-                    // By default java maven artifacts will be located at: target/*.jar folder, (or .war, .hpi, .ear in that's the case)
+                    // Extract the path from the File found
                     artifactPath = filesByGlob[0].path;
                     // Assign to a boolean response verifying If the artifact name exists
                     artifactExists = fileExists artifactPath;
@@ -75,6 +81,7 @@ pipeline {
                                 type: "pom"]
                             ]
                         );
+                        
                     } else {
                         error "*** File: ${artifactPath}, could not be found";
                     }
