@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     // Let's clone the source
-                    git 'https://github.com/javaee/cargotracker.git';
+                    git 'https://github.com/danielalejandrohc/cargotracker.git';
                 }
             }
         }
@@ -81,7 +81,7 @@ pipeline {
                                 type: "pom"]
                             ]
                         );
-                        
+
                     } else {
                         error "*** File: ${artifactPath}, could not be found";
                     }
