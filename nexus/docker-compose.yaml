@@ -1,0 +1,15 @@
+version: '3'
+services:
+  jenkins:
+    build: 
+      dockerfile: JenkinsDockerfile
+      context: .
+    environment: 
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Dpermissive-script-security.enabled=true
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc_configs/jcasc.yaml
+    ports:
+      - "8080:8080"
+  nexus-3:
+    image: "sonatype/nexus3:3.15.2"
+    ports:
+        - "8081:8081"

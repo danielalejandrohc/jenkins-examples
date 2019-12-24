@@ -1,0 +1,147 @@
+credentials:
+    system:
+      domainCredentials:
+      - credentials:
+        # Credential to use with Rest API operations and Nexus Jenkins plugin
+        - usernamePassword:
+            description: "Nexus credential"
+            id: "nexus-credentials"
+            password: "admin123"
+            scope: GLOBAL
+            username: "admin"
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  disableRememberMe: false
+  markupFormatter: "plainText"
+  mode: NORMAL
+  myViewsTabBar: "standard"
+  numExecutors: 2
+  primaryView:
+    all:
+      name: "all"
+  projectNamingStrategy: "standard"
+  quietPeriod: 5
+  remotingSecurity:
+    enabled: false
+  scmCheckoutRetryCount: 0
+  slaveAgentPort: 50000
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+  views:
+  - all:
+      name: "all"
+  viewsTabBar: "standard"
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  envInject:
+    enableLoadingFromMaster: false
+    enablePermissions: false
+    hideInjectedVars: false
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: true
+  sSHD:
+    port: -1
+unclassified:
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketCloudEndpoint:
+        enableCache: false
+        manageHooks: false
+        repositoriesCacheDuration: 0
+        teamCacheDuration: 0
+  defaultFolderConfiguration:
+    healthMetrics:
+    - worstChildHealthMetric:
+        recursive: true
+  diskUsageProjectActionFactory:
+    checkWorkspaceOnSlave: false
+    historyLength: 183
+    showGraph: false
+    timeoutWorkspace: 5
+  gitHubPluginConfig:
+    hookUrl: "http://localhost:8080/github-webhook/"
+  gitSCM:
+    createAccountBasedOnEmail: false
+    showEntireCommitSummaryInChanges: false
+    useExistingAccountWithSameEmail: false
+  location:
+    adminAddress: "address not configured yet <nobody@nowhere>"
+  mailer:
+    charset: "UTF-8"
+    useSsl: false
+  mavenModuleSet:
+    localRepository: "default"
+  pollSCM:
+    pollingThreadCount: 10
+  timestamperConfig:
+    allPipelines: false
+    elapsedTimeFormat: "'<b>'HH:mm:ss.S'</b> '"
+    systemTimeFormat: "'<b>'HH:mm:ss'</b> '"
+  whitelist:
+    enabled: false
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  # Tool defined to use it in the Jenkinsfile 
+  maven:
+    installations:
+    - name: "Maven 3.6.0"
+      properties:
+      - installSource:
+          installers:
+          - maven:
+              id: "3.6.0"
+  pipelineMaven:
+    triggerDownstreamUponResultAborted: false
+    triggerDownstreamUponResultFailure: false
+    triggerDownstreamUponResultNotBuilt: false
+    triggerDownstreamUponResultSuccess: true
+    triggerDownstreamUponResultUnstable: false
+jobs:
+  # Example pipeline to build and publish a java artifact
+  - script: >
+      pipelineJob('nexus-push') {
+        logRotator(5, 1)
+        definition {
+          cpsScm {
+              lightweight(true)
+              scm {      
+                  git {
+                      remote {
+                          url("https://github.com/danielalejandrohc/jenkins-examples.git")
+                          branch("master")
+                      }
+                  }
+              }
+              scriptPath("nexus/uploadArtifacts.groovy")
+          }
+        }
+      }
+  # This is the reference to a groovy script in github which contains the startup script    
+  - script: >          
+      pipelineJob('nexus-create-repo') {
+        logRotator(5, 1)
+        definition {
+          cpsScm {
+              lightweight(true)
+              scm {      
+                  git {
+                      remote {
+                          url("https://github.com/danielalejandrohc/jenkins-examples.git")
+                          branch("master")
+                      }
+                  }
+              }
+              scriptPath("nexus/createNexusRepository.groovy")
+          }
+        }
+      }

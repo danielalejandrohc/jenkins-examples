@@ -1,0 +1,15 @@
+FROM jenkins/jenkins:2.204.1-jdk11
+
+# This will skip the wizard UI configuration so you can use Jenkins straight. 
+ENV JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+
+# This will install the plugins from "plugins.txt"
+COPY plugins.txt /usr/share/jenkins/plugins.txt
+RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/plugins.txt
+
+# This will copy the Configuration as Code file - init.groovy:/var/jenkins_home/init.groovy.d/init.groovy
+# Notice that this is used in conjunction with the enviroment variable CASC_JENKINS_CONFIG defined in docker-compose file 
+COPY jcasc.yaml /var/jenkins_home/casc_configs/jcasc.yaml
+
+# Copy startup groovy script
+COPY init.groovy /var/jenkins_home/init.groovy.d/init.groovy
