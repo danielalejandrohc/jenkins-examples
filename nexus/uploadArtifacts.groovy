@@ -1,3 +1,6 @@
+
+// Find a live example here: https://github.com/danielalejandrohc/jenkins-examples/tree/master/nexus
+// https://dev.danielalejandrohc.com/posts/maven-and-nexus3/
 pipeline {
 
     agent {
