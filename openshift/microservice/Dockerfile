@@ -1,4 +1,4 @@
 FROM openjdk:8-jre
-VOLUME /tmp
+WORKDIR /microservice
 COPY /target/*.jar application-service.jar
-CMD ["bash", "exec java $JAVA_OPTS -jar /application-service.jar"]
+ENTRYPOINT ["java","-jar","/microservice/application-service.jar
