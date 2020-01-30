@@ -12,8 +12,8 @@ public class MemoryAlloc {
     private List<Integer> memory = new ArrayList<>();
     private int someNumber = 0;
 
-    @GetMapping("/date")
-    public int add() {
+    @GetMapping("/addToMemory")
+    public int addToMemory() {
         memory.add(someNumber++);
         return memory.size();
     }
