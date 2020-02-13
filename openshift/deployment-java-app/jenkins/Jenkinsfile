@@ -1,0 +1,118 @@
+pipeline {
+    agent {
+        label "master"
+    }
+
+    environment {
+        DOCKER_ORG = "danielahcardona" // If you are going to test this locally then you need to assign your DockerHub account name 
+        DOCKER_REPO = "microservice_java_prometheus" // Create this repository on your account
+        DOCKER_CREDENTIAL_ID = "dockerhub-credential"
+        OC_TOOL = "PATH+OC=${tool 'oc-tool-3.11'}"
+        OC_CLUSTER = "openshift-local-cluster"
+        OC_NAMESPACE = "microservices"     
+        OC_DC_NAME = "java-microservice"   
+    }
+
+    tools {
+        maven 'maven-3.6.3' 
+    }
+
+    stages {
+
+        stage("git clone") {
+            steps {
+                git url: "https://github.com/danielalejandrohc/jenkins-examples.git"
+            }
+        }
+
+        stage("maven build") {
+            steps {
+                dir("openshift/microservice") {
+                    sh "mvn clean package"
+                }
+            }
+        }
+
+        stage("docker build and push") {
+            steps {
+                script {
+                    dir("openshift/microservice") {   
+                        // Let's create a interesting Docker Tag, some tag which allow to update this piece of information
+                        // In the deployment config
+                        // In this example the tag is the version of the code found in the pom.xml + current BUILD_ID 
+                        pom = readMavenPom file: 'pom.xml'   
+                        dockerTag = "${pom.version}-${BUILD_NUMBER}";
+                        echo "Docker tag is ${dockerTag}";
+                        pwd = pwd()
+                        echo "current path ${pwd}"
+                        sh "ls -l ${pwd}/target"
+                        image = docker.build("${DOCKER_ORG}/${DOCKER_REPO}");
+                        docker.withRegistry("", DOCKER_CREDENTIAL_ID) {                            
+                            image.push(dockerTag);
+                        };
+                    }
+                }
+            }
+        }
+
+        stage("openshift deployment") {
+            steps {
+                script {
+                    echo "Starting openshift deploy";
+                    // From the DeploymentConfig let's find the container ''
+                    withEnv([OC_TOOL]) {
+                        openshift.withCluster(OC_CLUSTER) {
+                            openshift.withProject(OC_NAMESPACE) {
+                                openshift.raw("get DeploymentConfig");
+                                dcSelector = openshift.selector("DeploymentConfig", OC_DC_NAME);
+                                if(dcSelector.exists()) {
+                                    dc = dcSelector.object();
+                                    container = dc.spec.template.spec.containers.find { container -> container.name.equals("spring-boot") };
+                                    echo "Current image: ${container.image}"
+                                    container.image = "${DOCKER_ORG}/${DOCKER_REPO}:${dockerTag}";
+                                    echo "New image: ${container.image}";
+                                    openshift.apply(dc);
+                                } else {
+                                    error "Error: DC do not exists";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage("openshift deployment monitoring") {
+            steps {
+                script {
+                    // Wait 5 seconds. Time enough to get a new Deployment created
+                    sleep 5;
+
+                    withEnv([OC_TOOL]) {
+                        openshift.withCluster(OC_CLUSTER) {
+                            openshift.withProject(OC_NAMESPACE) {
+                                def latestDeploymentVersion = openshift.selector('dc', OC_DC_NAME).object().status.latestVersion;
+                                rc = openshift.selector('rc', "${OC_DC_NAME}-${latestDeploymentVersion}").object();                                            
+                                try {
+                                    // This will monitor for the latest Deploy of the application
+                                    // It will check until the replicas ready are equal to the expected replicas
+                                    // This will wait for the Health Check to success
+                                    timeout (time: 5, unit: 'MINUTES') {
+                                        while(!rc.status.replicas.equals(rc.status.readyReplicas)) {
+                                            rc = openshift.selector('rc', "${OC_DC_NAME}-${latestDeploymentVersion}").object();
+                                            echo "Cluster: ${OC_CLUSTER}, rc: ${rc.metadata.name}, current ready replicas: ${rc.status.readyReplicas}, replicas: ${rc.status.replicas}";
+                                            sleep 5;
+                                        }
+                                    }
+                                } catch(e) {
+                                    error "Error while monitoring the application. Cluster ${OC_CLUSTER}. Deploy ${OC_DC_NAME}-${latestDeploymentVersion}. Most likely a timeout happened. Exception: ${e}";
+                                }
+                            }
+                        }
+                    } 
+                }
+            }
+        }
+
+    }
+}
