@@ -49,6 +49,7 @@ pipeline {
                         image = docker.build("${DOCKER_ORG}/${DOCKER_REPO}");
                         docker.withRegistry("", DOCKER_CREDENTIAL_ID) {                            
                             image.push(dockerTag);
+                            image.push("latest");
                         };
                     }
                 }
