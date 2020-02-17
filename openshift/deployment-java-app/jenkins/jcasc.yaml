@@ -1,0 +1,151 @@
+credentials:
+  system:
+    domainCredentials:
+    - credentials:
+      - openShiftToken:
+          description: "openshift-login"
+          id: "openshift-login"
+          scope: GLOBAL
+          secret: "eyJhbGciOiJSUzI1NiIsImtpZCI6IiJ9.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJtaWNyb3NlcnZpY2VzIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZWNyZXQubmFtZSI6Im1pY3Jvc2VydmljZXMtdG9rZW4tNHNndGgiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC5uYW1lIjoibWljcm9zZXJ2aWNlcyIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjY2MGU3ZGYyLTRlMDgtMTFlYS1iNzVmLWU4NmE2NDNjOGM3NSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDptaWNyb3NlcnZpY2VzOm1pY3Jvc2VydmljZXMifQ.CxJz6aHgG015O_xYsfKO4nQMzgZ2U9SHWiK5byUSXwToxwhh62wRBsJeFtjVYCEXvHv44nhAA2ESolNbY5iO9tVqVTQ0WGLG9ly2XSJ5BWaRRi4IaklbSYNt42-Duc31sZEJ754iGUE_ZAqmneVq7qB0cEjdYE4DdpjkeuLuJWc-z_UGyPs0VvvGdvtKSaJoheoNvr6LyGAroYkDqrpV7kHZD-laMN-5fuetesAmGwDhfZ8gE8ZfTknA90rJx5XRngPTPd1IVPLRgl8hySfNtSOeiI2mCM6euUwm78Q9ccVDqSp0WM_7bHB4ky7CluL8B3ub2Ac0l9_FV6JN2hhTqg"
+      - basicSSHUserPrivateKey:
+          description: "Github SSH key"
+          id: "github"
+      - usernamePassword:
+          description: "dockerhub-credential"
+          id: "dockerhub-credential"
+          password: "yourpassswordshouldbehere"
+          scope: GLOBAL
+          username: "danielahcardona"
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  disableRememberMe: false
+  markupFormatter: "plainText"
+  mode: NORMAL
+  myViewsTabBar: "standard"
+  numExecutors: 2
+  primaryView:
+    all:
+      name: "all"
+  projectNamingStrategy: "standard"
+  quietPeriod: 5
+  remotingSecurity:
+    enabled: false
+  scmCheckoutRetryCount: 0
+  slaveAgentPort: 50000
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+  views:
+  - all:
+      name: "all"
+  viewsTabBar: "standard"
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  envInject:
+    enableLoadingFromMaster: false
+    enablePermissions: false
+    hideInjectedVars: false
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: true
+  sSHD:
+    port: -1
+unclassified:
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketCloudEndpoint:
+        enableCache: false
+        manageHooks: false
+        repositoriesCacheDuration: 0
+        teamCacheDuration: 0
+  defaultFolderConfiguration:
+    healthMetrics:
+    - worstChildHealthMetric:
+        recursive: true
+  diskUsageProjectActionFactory:
+    checkWorkspaceOnSlave: false
+    historyLength: 183
+    showGraph: false
+    timeoutWorkspace: 5
+  gitHubPluginConfig:
+    hookUrl: "http://jenkins.127.0.0.1.nip.io/github-webhook/"
+  gitSCM:
+    createAccountBasedOnEmail: false
+    showEntireCommitSummaryInChanges: false
+    useExistingAccountWithSameEmail: false
+  location:
+    adminAddress: "address not configured yet <nobody@nowhere>"
+    url: "http://jenkins.127.0.0.1.nip.io/"
+  mailer:
+    charset: "UTF-8"
+    useSsl: false
+  mavenModuleSet:
+    localRepository: "default"
+  openShift:
+    clusterConfigs:
+    - defaultProject: "default"
+      name: "openshift-local-cluster"
+      serverUrl: "https://127.0.0.1:8443"
+      skipTlsVerify: true
+      credentialsId: "openshift-login"
+  pollSCM:
+    pollingThreadCount: 10
+  timestamperConfig:
+    allPipelines: false
+    elapsedTimeFormat: "'<b>'HH:mm:ss.S'</b> '"
+    systemTimeFormat: "'<b>'HH:mm:ss'</b> '"
+  whitelist:
+    enabled: false
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  maven:
+    installations:
+    - name: "maven-3.6.3"
+      properties:
+      - installSource:
+          installers:
+          - maven:
+              id: "3.6.3"
+  oc:
+    installations:
+    - name: "oc-tool-3.11"
+      properties:
+      - installSource:
+          installers:
+          - zip:
+              subdir: "openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit"
+              url: "https://github.com/openshift/origin/releases/download/v3.11.0/openshift-origin-client-tools-v3.11.0-0cbc58b-linux-64bit.tar.gz"
+  pipelineMaven:
+    triggerDownstreamUponResultAborted: false
+    triggerDownstreamUponResultFailure: false
+    triggerDownstreamUponResultNotBuilt: false
+    triggerDownstreamUponResultSuccess: true
+    triggerDownstreamUponResultUnstable: false
+jobs:
+  # Example pipeline to build and publish a java artifact
+  - script: >
+      pipelineJob('microservice-deploy') {
+        logRotator(5, 1)
+        definition {
+          cpsScm {
+              lightweight(true)
+              scm {      
+                  git {
+                      remote {
+                          url("https://github.com/danielalejandrohc/jenkins-examples.git")
+                          branch("master")
+                      }
+                  }
+              }
+              scriptPath("openshift/deployment-java-app/jenkins/Jenkinsfile")
+          }
+        }
+      }

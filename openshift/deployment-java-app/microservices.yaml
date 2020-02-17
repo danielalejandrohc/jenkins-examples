@@ -1,0 +1,139 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    name: java-microservice
+  name: java-microservice
+  namespace: microservices
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    name: spring-boot
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: spring-boot
+    spec:
+      containers:
+        - image: 'danielahcardona/microservice_java_prometheus:latest'
+          imagePullPolicy: Always
+          name: spring-boot
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: microservices
+      serviceAccountName: microservices
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: java-microservice
+  name: java-microservice
+  namespace: microservices
+spec:
+  ports:
+    - name: 8080-tcp
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    deploymentconfig: java-microservice
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: java-microservice
+  name: java-microservice
+  namespace: microservices
+spec:
+  host: java-microservice.127.0.0.1.nip.io
+  port:
+    targetPort: 8080-tcp
+  to:
+    kind: Service
+    name: java-microservice
+    weight: 100
+  wildcardPolicy: None  
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: microservice-sa-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+- kind: ServiceAccount
+  name: microservices
+  namespace: microservices
+---
+apiVersion: v1
+data:
+  prometheus.yml: >-
+    # my global config
+
+    global:
+      scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+      evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+      # scrape_timeout is set to the global default (10s).
+
+    # Load rules once and periodically evaluate them according to the global
+    'evaluation_interval'.
+
+    rule_files:
+      # - "first_rules.yml"
+      # - "second_rules.yml"
+
+    # A scrape configuration containing exactly one endpoint to scrape:
+
+    # Here it's Prometheus itself.
+
+    scrape_configs:
+      # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+      - job_name: 'prometheus'
+        # metrics_path defaults to '/metrics'
+        # scheme defaults to 'http'.
+        static_configs:
+        - targets: ['127.0.0.1:9090']
+
+      - job_name: 'java-microservice'
+        metrics_path: '/actuator/prometheus'
+        scrape_interval: 5s
+        static_configs:
+        - targets: ['java-microservice.microservices.svc:8080']
+kind: ConfigMap
+metadata:
+  name: prometheus
+  namespace: monitor
