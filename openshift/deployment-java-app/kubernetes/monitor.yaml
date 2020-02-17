@@ -1,0 +1,189 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    name: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  selector:
+    name: prometheus
+  strategy:
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      labels:
+        name: prometheus
+    spec:
+      containers:
+        - image: prom/prometheus:v2.15.2
+          imagePullPolicy: Always
+          name: prometheus
+          ports:
+            - containerPort: 9000
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /etc/prometheus/prometheus.yml
+              name: prometheus
+              subPath: prometheus.yml
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: monitor
+      terminationGracePeriodSeconds: 30
+      volumes:
+        - configMap:
+            defaultMode: 420
+            items:
+              - key: prometheus.yml
+                path: prometheus.yml
+            name: prometheus
+          name: prometheus
+  test: false
+  triggers:
+    - type: ConfigChange
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftWebConsole
+  labels:
+    app: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  ports:
+    - name: 9090-tcp
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    deploymentconfig: prometheus
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: prometheus
+  name: prometheus
+  namespace: monitor
+spec:
+  host: prometheus.127.0.0.1.nip.io
+  port:
+    targetPort: 9090-tcp
+  to:
+    kind: Service
+    name: prometheus
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    name: grafana 
+  name: grafana
+  namespace: monitor
+spec:
+  minReadySeconds: 60
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    name: grafana
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        name: grafana
+    spec:
+      containers:
+        - image: grafana/grafana:6.5.3-ubuntu
+          imagePullPolicy: Always
+          name: grafana
+          ports:
+            - containerPort: 3000
+              name: http
+              protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: monitor
+      serviceAccountName: monitor
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+    - type: ConfigChange
+---    
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftWebConsole
+  labels:
+    app: grafana
+  name: grafana
+  namespace: monitor
+spec:
+  ports:
+    - name: 3000-tcp
+      port: 3000
+      protocol: TCP
+      targetPort: 3000
+  selector:
+    deploymentconfig: grafana
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+  namespace: monitor
+spec:
+  host: grafana.127.0.0.1.nip.io
+  port:
+    targetPort: 3000-tcp
+  to:
+    kind: Service
+    name: grafana
+    weight: 100
+  wildcardPolicy: None
