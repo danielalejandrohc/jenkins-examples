@@ -11,9 +11,11 @@ pipeline {
         OC_CLUSTER = "openshift-local-cluster"
         OC_NAMESPACE = "microservices"     
         OC_DC_NAME = "java-microservice"   
+        MICROSERVICE_PATH = "openshift/deployment-java-app/java/microservice"
     }
 
-    tools {
+    // Maven and Openshift CLI will be autoconfigured
+    tools {        
         maven 'maven-3.6.3' 
     }
 
@@ -21,13 +23,14 @@ pipeline {
 
         stage("git clone") {
             steps {
+                cleanWs();
                 git url: "https://github.com/danielalejandrohc/jenkins-examples.git"
             }
         }
 
         stage("maven build") {
             steps {
-                dir("openshift/microservice") {
+                dir(MICROSERVICE_PATH) {
                     sh "mvn clean package"
                 }
             }
@@ -36,7 +39,7 @@ pipeline {
         stage("docker build and push") {
             steps {
                 script {
-                    dir("openshift/microservice") {   
+                    dir(MICROSERVICE_PATH) {   
                         // Let's create a interesting Docker Tag, some tag which allow to update this piece of information
                         // In the deployment config
                         // In this example the tag is the version of the code found in the pom.xml + current BUILD_ID 
@@ -47,6 +50,7 @@ pipeline {
                         echo "current path ${pwd}"
                         sh "ls -l ${pwd}/target"
                         image = docker.build("${DOCKER_ORG}/${DOCKER_REPO}");
+                        // Push the docker image to a custom tag and 'latest'
                         docker.withRegistry("", DOCKER_CREDENTIAL_ID) {                            
                             image.push(dockerTag);
                             image.push("latest");
