@@ -87,7 +87,7 @@ pipeline {
             }
         }
 
-        stage("openshift deployment monitoring") {
+        stage("openshift monitoring") {
             steps {
                 script {
                     // Wait 5 seconds. Time enough to get a new Deployment created
