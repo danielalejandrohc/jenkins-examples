@@ -1,0 +1,10 @@
+FROM python:3.8-slim
+USER root
+RUN pip3 install awscli --upgrade --user
+RUN apt-get update
+RUN apt-get install curl -y
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt install nodejs -y
+RUN npm install -g serverless
+RUN npm update -g serverless
+RUN pip3 install awscli --upgrade --user
