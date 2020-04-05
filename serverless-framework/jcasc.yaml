@@ -1,0 +1,114 @@
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  disableRememberMe: false
+  markupFormatter: "plainText"
+  mode: NORMAL
+  myViewsTabBar: "standard"
+  numExecutors: 2
+  primaryView:
+    all:
+      name: "all"
+  projectNamingStrategy: "standard"
+  quietPeriod: 5
+  remotingSecurity:
+    enabled: false
+  scmCheckoutRetryCount: 0
+  slaveAgentPort: 50000
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+  views:
+  - all:
+      name: "all"
+  viewsTabBar: "standard"
+security:
+  apiToken:
+    creationOfLegacyTokenEnabled: false
+    tokenGenerationOnCreationEnabled: false
+    usageStatisticsEnabled: true
+  envInject:
+    enableLoadingFromMaster: false
+    enablePermissions: false
+    hideInjectedVars: false
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: true
+  sSHD:
+    port: -1
+unclassified:
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketCloudEndpoint:
+        enableCache: false
+        manageHooks: false
+        repositoriesCacheDuration: 0
+        teamCacheDuration: 0
+  defaultFolderConfiguration:
+    healthMetrics:
+    - worstChildHealthMetric:
+        recursive: true
+  diskUsageProjectActionFactory:
+    checkWorkspaceOnSlave: false
+    historyLength: 183
+    showGraph: false
+    timeoutWorkspace: 5
+  gitSCM:
+    createAccountBasedOnEmail: false
+    showEntireCommitSummaryInChanges: false
+    useExistingAccountWithSameEmail: false
+  location:
+    adminAddress: "address not configured yet <nobody@nowhere>"
+    url: "http://jenkins.127.0.0.1.nip.io/"
+  mailer:
+    charset: "UTF-8"
+    useSsl: false
+  mavenModuleSet:
+    localRepository: "default"
+  openShift:
+    clusterConfigs:
+    - defaultProject: "default"
+      name: "openshift-local-cluster"
+      serverUrl: "https://127.0.0.1:8443"
+      skipTlsVerify: true
+      credentialsId: "openshift-login"
+  pollSCM:
+    pollingThreadCount: 10
+  timestamperConfig:
+    allPipelines: false
+    elapsedTimeFormat: "'<b>'HH:mm:ss.S'</b> '"
+    systemTimeFormat: "'<b>'HH:mm:ss'</b> '"
+  whitelist:
+    enabled: false
+tool:
+  git:
+    installations:
+    - home: "git"
+      name: "Default"
+  pipelineMaven:
+    triggerDownstreamUponResultAborted: false
+    triggerDownstreamUponResultFailure: false
+    triggerDownstreamUponResultNotBuilt: false
+    triggerDownstreamUponResultSuccess: true
+    triggerDownstreamUponResultUnstable: false
+jobs:
+  # Example pipeline to build and publish a java artifact
+  - script: >
+      pipelineJob('microservice-deploy') {
+        logRotator(5, 1)
+        definition {
+          cpsScm {
+              lightweight(true)
+              scm {      
+                  git {
+                      remote {
+                          url("https://github.com/danielalejandrohc/jenkins-examples.git")
+                          branch("master")
+                      }
+                  }
+              }
+              scriptPath("openshift/deployment-java-app/jenkins/Jenkinsfile")
+          }
+        }
+      }
