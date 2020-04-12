@@ -95,7 +95,7 @@ tool:
 jobs:
   # Example pipeline to build and publish a java artifact
   - script: >
-      pipelineJob('microservice-deploy') {
+      pipelineJob('aws-lambda-deploy') {
         logRotator(5, 1)
         definition {
           cpsScm {
@@ -108,7 +108,7 @@ jobs:
                       }
                   }
               }
-              scriptPath("openshift/deployment-java-app/jenkins/Jenkinsfile")
+              scriptPath("serverless-framework/Jenkinsfile")
           }
         }
       }
