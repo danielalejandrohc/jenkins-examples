@@ -4,40 +4,46 @@ pipeline {
     }
 
     stages {
+        // Use and build a Docker Image tagged with `serverless-framework`. This image contains python, aws cli, node and serverless
         stage ("Read Docker image") {
             steps {
-                // Let's clone a repository with our Dockerfile with Serverless and aws-cli on it. 
-                git "https://github.com/danielalejandrohc/jenkins-examples.git";
-                // Create a tag for the image for our usage in the Serverless stage
-                sh "docker build -t serverless-framework -f serverless-framework/DockerfileServerless ."
+                script {                    
+                    // Let's clone a repository with our Dockerfile with Serverless and aws-cli on it. 
+                    git "https://github.com/danielalejandrohc/jenkins-examples.git";
+                    // Create a tag for the image for our usage in the Serverless stage
+                    sh "docker build -t serverless-framework -f serverless-framework/DockerfileServerless .";
+                    currentDirectory = pwd();
+                }
             }
         }
 
         stage ("Build code") {
-            agent {
-                docker {
-                    image "maven:3.6-jdk-8"
-                }
-            }
             steps {
-                // Build a java code using Maven 3.6.
-                // Note: I found this pretty nice example of a Java microservice so I forked.
-                // You can create your own, include Spring Framework or any library you want
-                git "https://github.com/danielalejandrohc/aws-java-products-api.git"
-                sh "mvn clean package"
+                script {
+                    // Build a java code using Maven 3.6 official Docker image.
+                    // Note: I found this pretty nice example of a Java microservice so I forked.
+                    // You can create your own, include Spring Framework or any library you want
+                    docker.image('maven:3.6-jdk-8').inside("-v ${currentDirectory}:${currentDirectory}"){ 
+                        sh "rm -rf ${currentDirectory}/*"
+                        sh "ls -lt ${currentDirectory}";
+                        sh "cd  ${currentDirectory} && git clone https://github.com/danielalejandrohc/aws-java-products-api.git"
+                        sh "cd ${currentDirectory}/aws-java-products-api && mvn clean package";
+                    }
+                }
             }
         }
 
         stage ("Serverless deploy") {
-            agent {
-                docker {
-                    image 'serverless-framework'
-                    args "-e AWS_SECRET_ACCESS_KEY_VARIABLE=${AWS_SECRET_ACCESS_KEY_VARIABLE} -e AWS_ACCESS_KEY_ID_VARIABLE=${AWS_ACCESS_KEY_ID_VARIABLE}"
-                }
-            }
             steps {
-                sh "serverless config credentials --provider aws --key ${AWS_ACCESS_KEY_ID_VARIABLE} --secret ${AWS_SECRET_ACCESS_KEY_VARIABLE}";
-                sh "sls deploy"
+                script {
+                    // The AWS environment variables are set in the docker-compose file, you can read it from anywhere you want: ConfigMaps, Secrets, Jenkins credentials, etc.
+                    docker.image('serverless-framework').inside("-v ${currentDirectory}:${currentDirectory} -e AWS_SECRET_ACCESS_KEY_VARIABLE=${AWS_SECRET_ACCESS_KEY_VARIABLE} -e AWS_ACCESS_KEY_ID_VARIABLE=${AWS_ACCESS_KEY_ID_VARIABLE}"){ 
+                        // Set the AWS credentials to the serverless framework
+                        sh "serverless config credentials --provider aws --key ${AWS_ACCESS_KEY_ID_VARIABLE} --secret ${AWS_SECRET_ACCESS_KEY_VARIABLE}";
+                        // Deploy our code!
+                        sh "cd ${currentDirectory}/aws-java-products-api && sls deploy"
+                    }
+                }                
             }
         }
     }
