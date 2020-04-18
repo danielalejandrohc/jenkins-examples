@@ -2,9 +2,12 @@ FROM python:3.8-slim
 USER root
 RUN pip3 install awscli --upgrade --user
 RUN apt-get update
+# Install Node
 RUN apt-get install curl -y
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt install nodejs -y
+# Install Serverless
 RUN npm install -g serverless
 RUN npm update -g serverless
+# Install aws-cli
 RUN pip3 install awscli --upgrade --user
