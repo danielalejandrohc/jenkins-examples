@@ -1,0 +1,18 @@
+version: '3'
+services:
+  jenkins:
+    network_mode: host
+    build: 
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/var/jenkins_home/casc_configs/
+      # Mount docker.sock from host to the Jenkins container which has Docker installed
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Dpermissive-script-security.enabled=true
+      CASC_JENKINS_CONFIG: /var/jenkins_home/casc_configs/jcasc.yaml
+      AWS_ACCESS_KEY_ID_VARIABLE: ''
+      AWS_SECRET_ACCESS_KEY_VARIABLE: ''
+    ports:
+      - "8080:8080"
